@@ -149,6 +149,7 @@ parameters:
   displayName: HTTP OSE Git Repository URL
   name: HTTP_OSE_SOURCE_REPOSITORY_URL
   required: true
+  value: https://github.com/kevensen/rhscl-http-ose.git
 - description: Set this to a branch name, tag or other ref of your repository if you
     are not using the default branch.
   displayName: HTTP OSE Git Reference
