@@ -10,16 +10,6 @@ metadata:
   creationTimestamp: null
   name: rhscl-http
 objects:
-- apiVersion: "v1"
-  kind: "ImageStream"
-  metadata:
-    name: "rhscl-http"
-  spec:
-    tags:
-    - name: "latest"
-      from:
-        kind: "DockerImage"
-        name: ${HTTP_IMAGE_NAME}
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -64,20 +54,20 @@ objects:
         kind: ImageStreamTag
         name: rhscl-http-ose:latest
     source:
-      contextDir: ${HTTP_OSE_SOURCE_CONTEXT_DIR}
+      contextDir: ${HTTP_OSE_DOCKERFILE_CONTEXT_DIR}
       git:
-        uri: ${HTTP_OSE_SOURCE_REPOSITORY_URL}
+        uri: ${HTTP_OSE_DOCKERFILE_REPOSITORY_URL}
       type: Git
     strategy:
       dockerStrategy:
       type: Docker
     triggers:
     - github:
-        secret: ${HTTP_OSE_GITHUB_WEBHOOK_SECRET}
+        secret: ${HTTP_OSE_DOCKERFILE_GITHUB_WEBHOOK_SECRET}
       type: GitHub
     - type: Generic
       generic:
-        secret: ${HTTP_OSE_GENERIC_WEBHOOK_SECRET}
+        secret: ${HTTP_OSE_DOCKERFILE_GENERIC_WEBHOOK_SECRET}
     - type: ConfigChange
 - apiVersion: v1
   kind: BuildConfig
@@ -91,10 +81,10 @@ objects:
         kind: ImageStreamTag
         name: ${HTTP_SERVICE_NAME}:latest
     source:
-      contextDir: ${CONTEXT_DIR}
+      contextDir: ${HTTP_CONFIG_CONTEXT_DIR}
       git:
-        ref: ${SOURCE_REPOSITORY_REF}
-        uri: ${SOURCE_REPOSITORY_URL}
+        ref: ${HTTP_CONFIG_REPOSITORY_REF}
+        uri: ${HTTP_CONFIG_REPOSITORY_URL}
       type: Git
     strategy:
       sourceStrategy:
@@ -108,58 +98,63 @@ objects:
     triggers:
     - type: ImageChange
     - github:
-        secret: ${GITHUB_WEBHOOK_SECRET}
+        secret: ${HTTP_CONFIG_GITHUB_WEBHOOK_SECRET}
       type: GitHub
     - type: Generic
       generic:
-        secret: ${GENERIC_WEBHOOK_SECRET}
+        secret: ${HTTP_CONFIG_GENERIC_WEBHOOK_SECRET}
 parameters:
 - description: The name of the HTTP service
   displayName: HTTP Service Name
   name: HTTP_SERVICE_NAME
   value: http
   required: true
-- description: The HTTP image to use
-  displayName: HTTP Image Name
-  name: HTTP_IMAGE_NAME
-  value: registry.access.redhat.com/rhscl/httpd-24-rhel7
-  required: true
-- description: The path containing the HTTP configuration files
-  displayName: HTTP Configuration Path
-  name: HTTPD_CONFIGURATION_PATH
-  value: /opt/app-root/etc/httpd.d
-  required: true
-- description: The URL of the repository with your application source code.
-  displayName: Git Repository URL
-  name: SOURCE_REPOSITORY_URL
-  required: true
-- description: Set this to a branch name, tag or other ref of your repository if you
-    are not using the default branch.
-  displayName: Git Reference
-  name: SOURCE_REPOSITORY_REF
-  required: true
-  value: master
-- description: Set this to the relative path to your project if it is not in the root
-    of your repository.
-  displayName: Context Directory
-  name: CONTEXT_DIR
-  required: true
-  value: /
 - description: The URL of the repository with your application source code.
   displayName: HTTP OSE Git Repository URL
-  name: HTTP_OSE_SOURCE_REPOSITORY_URL
+  name: HTTP_OSE_DOCKERFILE_REPOSITORY_URL
   required: true
   value: https://github.com/kevensen/rhscl-http-ose.git
 - description: Set this to a branch name, tag or other ref of your repository if you
     are not using the default branch.
   displayName: HTTP OSE Git Reference
-  name: HTTP_OSE_SOURCE_REPOSITORY_REF
+  name: HTTP_OSE_DOCKERFILE_REPOSITORY_REF
   required: true
   value: master
 - description: Set this to the relative path to your project if it is not in the root
     of your repository.
   displayName: HTTP OSE Context Directory
-  name: HTTP_OSE_CONTEXT_DIR
+  name: HTTP_OSE_DOCKERFILE_CONTEXT_DIR
+  required: true
+  value: /
+- description: A secret string used to configure the GitHub webhook for the HTTP OSE repository.
+  displayName: HTTP OSE GitHub Webhook Secret
+  from: '[a-zA-Z0-9]{40}'
+  generate: expression
+  name: HTTP_OSE_DOCKERFILE_GITHUB_WEBHOOK_SECRET
+- description: A secret string used to configure the generic webhook for the HTTP OSE repository.
+  displayName: HTTP OSE Generic Webhook Secret
+  from: '[a-zA-Z0-9]{40}'
+  generate: expression
+  name: HTTP_OSE_DOCKERFILE_GENERIC_WEBHOOK_SECRET
+- description: The path containing the HTTP configuration files
+  displayName: HTTP Configuration Path
+  name: HTTPD_CONFIGURATION_PATH
+  value: /opt/app-root/etc/httpd.d
+  required: true
+- description: The URL of the repository with the Apache configuration.
+  displayName: Git Repository URL
+  name: HTTP_CONFIG_REPOSITORY_URL
+  required: true
+- description: Set this to a branch name, tag or other ref of your repository if you
+    are not using the default branch.
+  displayName: Git Reference
+  name: HTTP_CONFIG_REPOSITORY_REF
+  required: true
+  value: master
+- description: Set this to the relative path to your project if it is not in the root
+    of your repository.
+  displayName: Context Directory
+  name: HTTP_CONFIG_CONTEXT_DIR
   required: true
   value: /
 - description: The exposed hostname that will route to the CakePHP service, if left
@@ -170,9 +165,9 @@ parameters:
   displayName: GitHub Webhook Secret
   from: '[a-zA-Z0-9]{40}'
   generate: expression
-  name: GITHUB_WEBHOOK_SECRET
+  name: HTTP_CONFIG_GITHUB_WEBHOOK_SECRET
 - description: A secret string used to configure the generic webhook.
   displayName: Generic Webhook Secret
   from: '[a-zA-Z0-9]{40}'
   generate: expression
-  name: GENERIC_WEBHOOK_SECRET
+  name: HTTP_CONFIG_GENERIC_WEBHOOK_SECRET
